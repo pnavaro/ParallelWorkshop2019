@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # Parallel Algorithms: Thinking in Parallel
@@ -10,8 +11,6 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # will appear in the proceedings of the [First Workshop for High Performance Technical Computing in Dynamic
 # Languages](http://jiahao.github.io/hptcdl-sc14/), held in conjunction with [SC14: The International Conference on High Performance Computing, Networking, Storage and Analysis](http://sc14.supercomputing.org/)
 
-#-
-
 using Compose, Gadfly
 
 # # `reduce()`
@@ -22,18 +21,21 @@ using Compose, Gadfly
 
 reduce(+, 1:8) == sum(1:8)  # triangular numbers
 
-#-
-
 reduce(*, 1:8) == prod(1:8) # factorials
 
 
 # You can also use reduce to compute Fibonacci numbers using their recurrences.
 
 M=[1 1; 1 0]
-reduce(*,fill(M,3))
+fill(M,3)
+
+M=[1 1; 1 0]
+#reduce(*,fill(M,3))
 prod(fill(M,3))
 
-#-
+M=[1 1; 1 0]
+#reduce(*,fill(M,5))
+prod(fill(M,20))
 
 n= 40 # Try changing n to pick different values (try between 0-100)
 @show prod(fill(big.(M),n))
@@ -73,17 +75,12 @@ function prefix_serial!(⊕, y)
     y
 end
 
-#-
-
 @show prefix_serial!(+, [1:8;])
 @show cumsum(1:8)
-
-#-
 
 @show prefix_serial!(*, [1:8;])
 @show cumprod(1:8)
 
-#-
 @show accumulate(*, [1:8;])
 
 # However, it turns out that because these operations are associative, we can regroup the _order_ of how these sums or products are carried out. (This of course extends to other associative operations, too.) Another ordering of 8 associative operations is provided by `prefix8!`:
@@ -98,8 +95,6 @@ function prefix8!(⊕, y)
     for i in ( 3,5,7 ); y[i] = y[i-1] ⊕ y[i]; end
     y
 end
-
-#-
 
 prefix8!(+, [1:8;]) == cumsum(1:8)
 
@@ -118,14 +113,10 @@ function prefix!(⊕, y)
     y
 end
 
-# -
-
 A = rand(0:9, 123)
 prefix!(*, copy(A)) == cumprod(A)
 
 # ## What is this magic?
-
-#-
 
 # We can visualize the operations with a little bit of trickery. In Julia, arrays are simply types that expose the array protocol. In particular, they need to implement  methods for the generic functions `length`, `getindex` and `setindex!`. The last two are used in indexing operations, since statements
 #
@@ -169,15 +160,9 @@ function Base.setindex!(A::AccessArray, x, i::Int)
     A.data[i] = x
 end
 
-#-
-
 M = AccessArray(rand(8))
 
-#-
-
 M[7] = M[3] + M[2]
-
-#-
 
 M.history
 
@@ -185,15 +170,11 @@ M.history
 
 A=prefix8!(+, AccessArray(rand(8)))
 
-#-
-
 A.history
 
 # Now let's visualize this! Each entry in `A.history` is rendered by a gate object:
 
 using Compose: circle, mm
-
-#-
 
 struct Gate{I,O}
     ins :: I
@@ -242,8 +223,6 @@ function render(A::AccessArray)
     linewidth(0.1mm), stroke(colorant"grey")))
     compose(context(), C...)
 end
-
-#-
 
 render(prefix!(+, AccessArray(zeros(8))))
 
@@ -295,3 +274,5 @@ prefix_threads!(+, copy(A)) == prefix!(+, copy(A)) ≈ cumsum(A)
 # just fall out naturally.
 #
 # Finally, note that there can be clever ways to visualize algorithms as sanity checks.
+
+

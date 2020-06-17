@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # A brief introduction to Tasks
@@ -18,8 +19,6 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # sits at the top and can arbitrarily control who gets to run when. Julia's task
 # system uses cooperative multitasking (also known as coroutines or green threads).
 
-#-
-
 # Tasks work best when they're waiting for some _external_ condition to complete
 # their work. Let's say we had a directory "results" and wanted to process any
 # new files that appeared there:
@@ -35,11 +34,7 @@ watch_folder("results", #= time out in seconds =# 5)
 
 t = @async watch_folder("results") # no timeout means it will wait forever!
 
-#-
-
 run(`touch results/0.txt`)
-
-#-
 
 file, info = fetch(t)
 file # |> process
@@ -61,28 +56,18 @@ end
 
 t = @async process_folder("results")
 
-#-
-
 run(`touch results/1.txt`)
 readdir("processed-results")
 
-#-
-
 run(`touch results/2.txt`)
 readdir("processed-results")
-
-#-
 
 isdone = true
 run(`touch results/3.txt`)
 readdir("processed-results")
 
-#-
-
 run(`touch results/4.txt`)
 readdir("processed-results")
-
-#-
 
 rm("results", recursive=true)
 rm("processed-results", recursive=true)
@@ -119,7 +104,15 @@ end
 work(1)
 @time work(100_000_000)
 
-#-
+function syracuse(N)
+    flight = 0
+    while N > 1
+        N = (iseven(N) ? N ÷ 2 : 3N+1)
+        flight += 1
+    end
+    return flight
+end
+syracuse(100000)
 
 @time @sync for i in 1:10
     @async work(100_000_000)
@@ -137,7 +130,7 @@ methods(sleep)
 
 t = @async (sleep(5); rand())
 
-wait(t)
+@time wait(t) # barrier
 
 fetch(t)
 

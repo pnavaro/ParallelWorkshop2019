@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # Multithreading
@@ -12,8 +13,6 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 versioninfo(verbose = true)
 
-#-
-
 using Hwloc
 Hwloc.num_physical_cores()
 
@@ -23,22 +22,19 @@ Hwloc.num_physical_cores()
 # processors will lead to significantly worse performance because they still
 # have to share much of the nuts and bolts of the computation hardware.
 
-#-
-
 # Julia is somewhat multithreaded by default! BLAS calls (like matrix multiplication) are
 # already threaded:
 
 using BenchmarkTools
 A = rand(1000, 1000);
 B = rand(1000, 1000);
+BLAS.set_num_threads(1)
 @benchmark $A*$B
 
 # This is — by default — already using all your CPU cores! You can see the effect
 # by changing the number of threads (which BLAS supports doing dynamically):
 
 using LinearAlgebra
-BLAS.set_num_threads(1)
-@benchmark $A*$B
 BLAS.set_num_threads(4)
 @benchmark $A*$B
 
@@ -95,8 +91,6 @@ A = rand(10_000_000)
 threaded_sum1(A)
 @time threaded_sum1(A)
 
-#-
-
 sum(A)
 @time sum(A)
 
@@ -128,11 +122,11 @@ function threaded_sum3(A)
     r = Atomic{eltype(A)}(zero(eltype(A)))
     len, rem = divrem(length(A), nthreads())
     @threads for t in 1:nthreads()
-        rₜ = zero(eltype(A))
+        rt = zero(eltype(A))
         @simd for i in (1:len) .+ (t-1)*len
-            @inbounds rₜ += A[i]
+            @inbounds rt += A[i]
         end
-        atomic_add!(r, rₜ)
+        atomic_add!(r, rt)
     end
     # catch up any stragglers
     result = r[]
@@ -152,8 +146,6 @@ threaded_sum3(rand(10) .+ rand(10)im) # try an array of complex numbers!
 # Isn't there an easier way?
 
 R = zeros(eltype(A), nthreads())
-
-#-
 
 function threaded_sum4(A)
     R = zeros(eltype(A), nthreads())
@@ -185,8 +177,6 @@ threaded_sum4(rand(10) .+ rand(10)im)
 #       share state. `@threads for i in 1:nthreads()` is a handy idiom.
 #     * Alternatively, just use an array and only access a single thread's elements
 
-#-
-
 # # Beware of global state (even if it's not obvious!)
 #
 # Another class of algorithm that you may want to parallelize is a monte-carlo
@@ -195,8 +185,6 @@ threaded_sum4(rand(10) .+ rand(10)im)
 # parallelism quite nicely!
 
 using BenchmarkTools
-
-#-
 
 function serialpi(n)
     inside = 0
@@ -235,8 +223,6 @@ for i in 1:N
 end
 Rserial
 
-#-
-
 Random.seed!(0)
 Rthreaded = zeros(N)
 @threads for i in 1:N
@@ -244,9 +230,9 @@ Rthreaded = zeros(N)
 end
 Rthreaded
 
-#-
-
 Set(Rserial) == Set(Rthreaded)
+
+indexin(Rserial, Rthreaded)
 
 # Aha, `rand()` isn't (currently) threadsafe! It's mutating (and reading) some global each
 # time to figure out what to get next. This leads to slowdowns — and worse — it
@@ -280,8 +266,6 @@ threadedpi2(240)
 # As an aside, be careful about initializing many `MersenneTwister`s with
 # different states. Better to use [`randjump`](https://docs.julialang.org/en/v1/manual/parallel-computing/#Side-effects-and-mutable-function-arguments-1) to skip ahead for a single state.
 
-#-
-
 # # Beware oversubscription
 #
 # Remember how BLAS is threaded by default? What happens if we try to `@threads`
@@ -298,8 +282,6 @@ end
 serial_matmul(Ms[1:1]);
 @time serial_matmul(Ms);
 
-#-
-
 using LinearAlgebra
 BLAS.set_num_threads(nthreads()) # Explicitly tell BLAS to use the same number of threads
 function threaded_matmul(As)
@@ -312,18 +294,12 @@ end
 threaded_matmul(Ms[1:1])
 @time threaded_matmul(Ms);
 
-#-
-
 BLAS.set_num_threads(1)
 @time threaded_matmul(Ms);
-
-#-
 
 @time serial_matmul(Ms) # Again, now that BLAS has just 1 thread
 
 # # Beware "false sharing"
-
-#-
 
 # Remember the memory latency table?
 #
@@ -356,10 +332,9 @@ function test(spacing)
     end
     a, calls
 end
-@benchmark test(1);
-@benchmark test(8);
+@benchmark test(1)
 
-#-
+@benchmark test(8)
 
 # ## Further improvements coming here!
 #
@@ -368,7 +343,7 @@ end
 # having callers call them with `@threads`. Uses a state-of-the-art work queue
 # mechanism to make sure that all threads stay busy.
 
-#-
+# -
 
 # # Threading takeaways:
 #

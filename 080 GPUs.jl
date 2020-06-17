@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # GPUs
@@ -12,7 +13,7 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # Just like how we needed to send data to other processes, we need to send our
 # data to the GPU to do computations there.
 
-#-
+# -
 
 # ## How is a GPU different from a CPU?
 #
@@ -36,7 +37,7 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 #
 # ![](https://raw.githubusercontent.com/JuliaComputing/JuliaAcademyData.jl/master/courses/Parallel_Computing/images/warp-branch.png)
 
-#-
+# -
 
 # You can inspect the installed GPUs with nvidia-smi:
 
@@ -116,7 +117,7 @@ function findpi_gpu(n)
 end
 findpi_gpu(10_000_000)
 
-#-
+# -
 
 using BenchmarkTools
 @btime findpi_gpu(10_000_000)
@@ -125,7 +126,7 @@ using BenchmarkTools
 # That leans on broadcast to build the GPU kernel — and is creating three arrays
 # in the process — but it's still much faster than our serial pi from before.
 
-#-
+# -
 
 # In general, using CuArrays and broadcast is one of the best ways to just
 # get everything to work. If you really want to get your hands dirty, you

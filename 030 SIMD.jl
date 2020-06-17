@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # SIMD: The parallelism that can (sometimes) happen automatically
@@ -5,8 +6,6 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # SIMD: Single-instruction, multiple data
 #
 # (Also confusingly called vectorization)
-
-#-
 
 # ## The architecture
 #
@@ -44,11 +43,7 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # \end{array}\right)
 # $$
 
-#-
-
 # ## Making it happen
-
-#-
 
 # Simple task: compute the sum of a vector:
 
@@ -62,8 +57,6 @@ function simplesum(A)
 end
 
 simplesum(A)
-
-#-
 
 using BenchmarkTools
 @btime simplesum($A)
@@ -96,8 +89,6 @@ end
 # just always use `@simd` for every `for` loop automatically?  Look at the values:
 
 simplesum(A), simdsum(A), sum(A)
-
-#-
 
 simplesum(A32), simdsum(A32), sum(A32)
 
@@ -159,13 +150,9 @@ B32 = rand(Int32(1):Int32(10), length(B)*2)
 
 # * You do need to think through the consequences of re-ordering your algorithm.
 
-#-
-
 # ## A slightly trickier case
 
 using BenchmarkTools
-
-#-
 
 function diff!(A, B)
     A[1] = B[1]
@@ -175,12 +162,10 @@ function diff!(A, B)
     return A
 end
 A = zeros(Float32, 100_000)
-B = rand(Float32, 100_000)
+B = rand(Float32, 100_000);
 
 diff!(A, B)
 [B[1];diff(B)] == A
-
-#-
 
 @btime diff!($A, $B)
 @btime diff($B);
@@ -216,8 +201,6 @@ unsafe_diff!(Bcopy, Bcopy)
 # Julia code automatically SIMD-able, some of the cases where it may fail, and
 # how to check its work.
 
-#-
-
 # ## SIMD
 #
 # * Exploits built-in parallelism in a processor
@@ -232,3 +215,5 @@ unsafe_diff!(Bcopy, Bcopy)
 #     * Smaller datatypes can improve this further; use `Float32` instead of `Float64`
 #       if possible, `Int32` instead of `Int64`, etc.
 #     * When buying a new processor, look for [AVX-512](https://en.wikichip.org/wiki/x86/avx-512) support
+
+

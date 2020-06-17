@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # Fast (serial) programming with Julia
@@ -9,14 +10,10 @@ import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 # I _highly_ recommend reviewing the [Performance Tips](https://docs.julialang.org/en/v1.1/manual/performance-tips/)
 # in the manual. This is only going to briefly introduce some of the main concepts.
 
-#-
-
 # ## Measure, measure, measure.
 #
 # It is very easy to experiment in Julia; you can rapidly try many options and
 # see what is the fastest.
-
-#-
 
 # Use the [BenchmarkTools](https://github.com/JuliaCI/BenchmarkTools.jl) package:
 
@@ -34,11 +31,7 @@ end
 data = rand(5000)
 findclosest(data, 0.5)
 
-#-
-
 @time findclosest(data, 0.5)
-
-#-
 
 @benchmark findclosest($data, $0.5)
 
@@ -79,8 +72,6 @@ end
 ## And do a spot-check to make sure we did the optimization correctly:
 findclosest2(data, 0.5) == findclosest(data, .5)
 
-#-
-
 @benchmark findclosest2($data, $0.5)
 
 # ## A quick word on macros
@@ -101,8 +92,6 @@ findclosest2(data, 0.5) == findclosest(data, .5)
 # Each macro can define its own special syntax, and this is used extensively for
 # code introspection, serial performance improvements, and — perhaps most
 # importantly — parallelization perimitives!
-
-#-
 
 # ## How is Julia fast?
 #
@@ -128,24 +117,14 @@ findclosest2(data, 0.5) == findclosest(data, .5)
 
 @code_typed optimize=false findclosest2(data, 0.5)
 
-#-
-
 typeof(data)
-
-#-
 
 newdata = Real[data...]
 typeof(newdata)
 
-#-
-
 @code_typed optimize=false findclosest2(newdata, 0.5)
 
-#-
-
 @benchmark findclosest2(newdata, 0.5)
-
-#-
 
 @code_warntype findclosest2(newdata, 0.5)
 
@@ -161,8 +140,6 @@ typeof(newdata)
 # * Non-constant globals (they might change!)
 # * Functions that change what they return based on the _values_:
 
-#-
-
 # #### More on macros
 #
 # Each and every macro can define its own syntax. The `@benchmark` macro uses `$` in a special way.
@@ -174,8 +151,6 @@ typeof(newdata)
 x = 0.5 # non-constant global
 @btime sin(x)
 @btime sin($x)
-
-#-
 
 @btime sin(0.5) # constant literal!
 @btime sin($0.5)
@@ -202,8 +177,6 @@ sprint(code_llvm, findclosest2, Tuple{Vector{Float32}, Int}) |> remove_comments 
 # cover two interesting ones here:
 
 @benchmark findclosest2($data, $0.5)
-
-#-
 
 sorteddata = sort(data)
 @benchmark findclosest2($sorteddata, $0.5)
@@ -236,7 +209,7 @@ sortedview = @view data[idxs]
 #
 #  (from https://www.prowesscorp.com/computer-latency-at-a-human-scale/)
 
-#-
+# -
 
 # # Key Takeaways
 #

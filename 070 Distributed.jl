@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Pkg; Pkg.activate(@__DIR__); Pkg.instantiate()
 
 # # Distributed (or multi-core or multi-process) parallelism
@@ -15,20 +16,14 @@ nprocs()
 import Hwloc
 n = Hwloc.num_physical_cores()
 
-#-
-
 addprocs(n, exeflags=`--project=$@__DIR__`)
 nprocs()
-
-#-
 
 myid()
 
 # Now we can easily communicate with the other nodes:
 
 r = @spawnat 2 (myid(), rand())
-
-#-
 
 fetch(r)
 
@@ -42,8 +37,6 @@ fetch(r)
 @time for w in workers()
     @spawnat w sleep(1)
 end
-
-#-
 
 @time @sync for w in workers()
     @spawnat w sleep(1)
@@ -59,8 +52,6 @@ end
     end
     return 4*series
 end
-
-#-
 
 @time work(1_000_000_000)
 @time @sync for i in workers()
@@ -81,19 +72,17 @@ end
 a = partial_pi(0:999)
 a, a-pi
 
-#-
-
 b = partial_pi(1000:9999)
 (a + b), (a+b) - pi
 
 # So now we can distribute this computation across our many workers!
 
 r = 0:1_000_000_000
-futures = Array{Future}(undef, nworkers())
+futures = Future[]
 @time begin
     for (i, id) in enumerate(workers())
         batch = 0:length(r)÷nworkers()-1
-        futures[i] = @spawnat id partial_pi(batch .+ (i-1)*(length(r)÷nworkers()))
+        push!(futures, @spawnat id partial_pi(batch .+ (i-1)*(length(r)÷nworkers())))
     end
     p = sum(fetch.(futures))
 end
@@ -110,11 +99,7 @@ p - pi
 # Why is this different from `@threads for` and `@simd for`? Why not just
 # `@distributed for`?  Why the `@distributed (+) for`?
 
-#-
-
 # ## Data movement
-
-#-
 
 # Remember: Moving data is _expensive_!
 #
@@ -140,8 +125,6 @@ p - pi
 # `@distributed` macro: each worker can do its own (intermediate) reduction
 # before returning just one value to our master node.
 
-#-
-
 # But sometimes you need to see those intermediate values. If you have a
 # very expensive computation relative to the communication overhead, there are
 # several ways to do this. The easiest is `pmap`:
@@ -158,11 +141,7 @@ p - pi
 # There are other ways of doing this, though, too — we'll get to them in a minute.
 # But first, there's something else that I glossed over: the `@everywhere`s above.
 
-#-
-
 # ## Code movement
-
-#-
 
 # Each node is _completely_ independent; it's like starting brand new, separate
 # Julia processes yourself. By default, `addprocs()` just launches the
@@ -170,23 +149,21 @@ p - pi
 # you can easily connect them to remote machines via SSH or even through cluster
 # managers.
 
-#-
-
 # Those `@everywhere`s above are very important! They run the given expression
 # on all workers to make sure the state between them is consistent. Without it,
 # you'll see errors like this:
 
-hello() = "hello world"
+@everywhere hello() = "hello world"
 r = @spawnat 2 hello()
 
 fetch(r)
+
+fetch(@spawnat 3 hello())
 
 # Note that this applies to packages, too!
 
 using Statistics # The Statistics stdlib defines mean
 fetch(@spawnat 2 mean(rand(100_000)))
-
-#-
 
 @everywhere using Statistics
 fetch(@spawnat 2 mean(rand(100_000)))
@@ -202,8 +179,6 @@ fetch(@spawnat 2 mean(rand(100_000)))
 # So there are some special array types that can help bridge the gap between
 # processes and make writing parallel code a bit easier.
 
-#-
-
 # ## The `SharedArray`
 #
 # If all workers are on the same physical machine, while they cannot share
@@ -214,7 +189,7 @@ fetch(@spawnat 2 mean(rand(100_000)))
 #
 # This is the prefix definition from the "thinking in parallel" course:
 #
-# ```
+# ```julia
 # using .Threads
 # function prefix_threads!(y, ⊕)
 #     l=length(y)
@@ -252,12 +227,8 @@ end
 data = rand(1_000_000);
 A = SharedArray(data);
 
-#-
-
-prefix!(+, copy(A)) # compile
+prefix!(+, A) # compile
 @time prefix!(+, A);
-
-#-
 
 A ≈ cumsum(data)
 
@@ -280,8 +251,6 @@ function prefix!(⊕, y::SharedArray)
 end
 A = SharedArray(data)
 @time prefix!(+, A)
-
-#-
 
 A ≈ cumsum(data)
 
@@ -312,8 +281,6 @@ end
 using BenchmarkTools
 @everywhere using BenchmarkTools
 fetch(@spawnat 2 @benchmark $A[1,1])
-
-#-
 
 fetch(@spawnat 2 @benchmark $A[end,end])
 
@@ -361,21 +328,14 @@ end
     new
 end
 
-#-
-
 A = DArray(I->rand(Bool, length.(I)), (20,20))
 @everywhere using Colors
-Gray.(A)
-
-#-
+#A = drand(20,20)
+Gray.(Int.(A))
 
 B = copy(A)
 
-#-
-
-B = Gray.(life_step(B))
-B
-#-
+B = Gray.(Int.(life_step(B)))
 
 # ## Clusters and more ways to distribute
 #
@@ -389,7 +349,7 @@ B
 # * [Hadoop](https://github.com/JuliaParallel/Elly.jl)
 # * [Spark](https://github.com/dfdx/Spark.jl)
 
-#-
+?addprocs
 
 # # Multi-process parallelism is the heavy-duty workhorse in Julia
 #
@@ -405,3 +365,5 @@ B
 #     * `pmap` is great for very expensive inner loops that return a value
 #     * `SharedArray`s can be an easier drop-in replacement for threading-like behaviors (on a single machine)
 #     * `DistributedArray`s can turn the problem on its head and let the data do the work splitting!
+
+
