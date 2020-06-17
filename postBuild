@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Install jupytext to convert jl script to notebooks
+conda install -y jupytext -c conda-forge
+jupytext --to ipynb *.jl
